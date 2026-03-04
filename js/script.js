@@ -703,6 +703,30 @@ class AIDrawAndGuess {
         this.ctx.globalAlpha = 1;
     }
 
+    // 计算拖拽角度，返回8个方向之一（0°, 45°, 90°, 135°, 180°, 225°, 270°, 315°）
+    getRotationAngle(startX, startY, endX, endY) {
+        const angle = Math.atan2(endY - startY, endX - startX);
+        // 转换为度数并四舍五入到45度的倍数
+        let degrees = Math.round(angle * 180 / Math.PI);
+        // 调整为8个方向
+        degrees = Math.round(degrees / 45) * 45;
+        return degrees * Math.PI / 180;
+    }
+
+    // 旋转形状
+    rotateAndDraw(drawFn, startX, startY, endX, endY) {
+        const cx = (startX + endX) / 2;
+        const cy = (startY + endY) / 2;
+        const angle = this.getRotationAngle(startX, startY, endX, endY);
+
+        this.ctx.save();
+        this.ctx.translate(cx, cy);
+        this.ctx.rotate(angle);
+        this.ctx.translate(-cx, -cy);
+        drawFn();
+        this.ctx.restore();
+    }
+
     // 绘制形状
     drawShape(startX, startY, endX, endY) {
         this.ctx.strokeStyle = this.strokeColor;
@@ -712,6 +736,9 @@ class AIDrawAndGuess {
         this.ctx.lineJoin = 'round';
 
         const useFill = this.fillColor !== null || this.shapeStyle === 'filled';
+
+        // 需要支持旋转的形状列表
+        const rotatableShapes = ['star', 'heart', 'smile', 'sad', 'sun', 'moon', 'cloud', 'flower', 'tree', 'house', 'balloon', 'butterfly', 'fish', 'bird'];
 
         switch (this.currentTool) {
             case 'line':
@@ -748,39 +775,64 @@ class AIDrawAndGuess {
                 break;
 
             case 'star':
-                this.drawStar(startX, startY, endX, endY);
+                this.rotateAndDraw(() => this.drawStar(startX, startY, endX, endY), startX, startY, endX, endY);
                 break;
 
             case 'heart':
-                this.drawHeart(startX, startY, endX, endY);
-                break;
-
-            case 'leaf':
-                this.drawLeaf(startX, startY, endX, endY);
+                this.rotateAndDraw(() => this.drawHeart(startX, startY, endX, endY), startX, startY, endX, endY);
                 break;
 
             case 'smile':
-                this.drawSmile(startX, startY, endX, endY);
+                this.rotateAndDraw(() => this.drawSmile(startX, startY, endX, endY), startX, startY, endX, endY);
                 break;
 
             case 'sad':
-                this.drawSad(startX, startY, endX, endY);
+                this.rotateAndDraw(() => this.drawSad(startX, startY, endX, endY), startX, startY, endX, endY);
                 break;
 
             case 'sun':
-                this.drawSun(startX, startY, endX, endY);
+                this.rotateAndDraw(() => this.drawSun(startX, startY, endX, endY), startX, startY, endX, endY);
                 break;
 
             case 'moon':
-                this.drawMoon(startX, startY, endX, endY);
+                this.rotateAndDraw(() => this.drawMoon(startX, startY, endX, endY), startX, startY, endX, endY);
                 break;
 
             case 'cloud':
-                this.drawCloud(startX, startY, endX, endY);
+                this.rotateAndDraw(() => this.drawCloud(startX, startY, endX, endY), startX, startY, endX, endY);
                 break;
 
             case 'rainbow':
                 this.drawRainbow(startX, startY, endX, endY);
+                break;
+
+            case 'flower':
+                this.rotateAndDraw(() => this.drawFlower(startX, startY, endX, endY), startX, startY, endX, endY);
+                break;
+
+            case 'tree':
+                this.rotateAndDraw(() => this.drawTree(startX, startY, endX, endY), startX, startY, endX, endY);
+                break;
+
+            case 'house':
+                this.rotateAndDraw(() => this.drawHouse(startX, startY, endX, endY), startX, startY, endX, endY);
+                break;
+
+            case 'balloon':
+                this.rotateAndDraw(() => this.drawBalloon(startX, startY, endX, endY), startX, startY, endX, endY);
+                break;
+
+            case 'butterfly':
+                this.rotateAndDraw(() => this.drawButterfly(startX, startY, endX, endY), startX, startY, endX, endY);
+                break;
+
+            case 'fish':
+                this.rotateAndDraw(() => this.drawFish(startX, startY, endX, endY), startX, startY, endX, endY);
+                break;
+
+            case 'bird':
+                this.rotateAndDraw(() => this.drawBird(startX, startY, endX, endY), startX, startY, endX, endY);
+                break;
                 break;
 
             case 'flower':
@@ -957,6 +1009,7 @@ class AIDrawAndGuess {
         const right = Math.max(x1, x2);
         const top = Math.min(y1, y2);
         const bottom = Math.max(y1, y2);
+        const cx = (x1 + x2) / 2;
         const width = right - left;
         const height = bottom - top;
 
@@ -971,7 +1024,7 @@ class AIDrawAndGuess {
         // 屋顶 (三角形)
         this.ctx.beginPath();
         this.ctx.moveTo(left - width * 0.1, top + height * 0.4);
-        this.ctx.lineTo(cx + width / 2, top - height * 0.1);
+        this.ctx.lineTo(cx, top - height * 0.15);
         this.ctx.lineTo(right + width * 0.1, top + height * 0.4);
         this.ctx.closePath();
         if (this.fillColor) {
