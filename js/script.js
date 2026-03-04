@@ -556,7 +556,7 @@ class AIDrawAndGuess {
         this.lastY = pos.y;
 
         // 形状工具需要记录起点并保存当前画布状态用于预览
-        if (['line', 'rect', 'circle', 'arrow'].includes(this.currentTool)) {
+        if (['line', 'rect', 'circle', 'arrow', 'star', 'heart', 'leaf', 'smile', 'sad'].includes(this.currentTool)) {
             this.shapeStartX = pos.x;
             this.shapeStartY = pos.y;
             this.tempImageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
@@ -587,7 +587,7 @@ class AIDrawAndGuess {
         }
 
         // 形状工具预览
-        if (['line', 'rect', 'circle', 'arrow'].includes(this.currentTool)) {
+        if (['line', 'rect', 'circle', 'arrow', 'star', 'heart', 'leaf', 'smile', 'sad'].includes(this.currentTool)) {
             this.ctx.putImageData(this.tempImageData, 0, 0);
             this.drawShape(this.shapeStartX, this.shapeStartY, pos.x, pos.y);
             this.lastX = pos.x;
@@ -1065,7 +1065,7 @@ class AIDrawAndGuess {
             this.isDrawing = false;
 
             // 形状工具在停止时保存最终状态
-            if (['line', 'rect', 'circle', 'arrow'].includes(this.currentTool)) {
+            if (['line', 'rect', 'circle', 'arrow', 'star', 'heart', 'leaf', 'smile', 'sad'].includes(this.currentTool)) {
                 this.saveCanvasState();
                 this.tempCanvas = null;
             } else {
