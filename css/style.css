@@ -574,6 +574,90 @@ body {
     min-width: 35px;
 }
 
+/* Tool Type Group */
+.tool-type-group,
+.fill-group,
+.canvas-bg-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.tool-type-group label,
+.fill-group label,
+.canvas-bg-group label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+.tool-buttons {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.tool-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 10px;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.75rem;
+    transition: var(--transition);
+}
+
+.tool-btn:hover {
+    background: var(--accent-secondary);
+    border-color: var(--accent-cyan);
+}
+
+.tool-btn.active {
+    background: var(--accent-secondary);
+    border-color: var(--accent-cyan);
+    box-shadow: 0 0 10px rgba(0, 217, 255, 0.3);
+}
+
+.fill-options {
+    display: flex;
+    gap: 4px;
+}
+
+.fill-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: var(--transition);
+}
+
+.fill-btn:hover {
+    border-color: var(--accent-cyan);
+}
+
+.fill-btn.active {
+    border-color: var(--accent-cyan);
+    box-shadow: 0 0 8px rgba(0, 217, 255, 0.3);
+}
+
+#fillColor,
+#canvasBgColor {
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    background: none;
+    padding: 0;
+}
+
 .action-buttons {
     display: flex;
     gap: 10px;

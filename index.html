@@ -101,6 +101,37 @@
                 </div>
 
                 <div class="tools-bar">
+                    <!-- 工具类型选择 -->
+                    <div class="tool-type-group">
+                        <label>工具</label>
+                        <div class="tool-buttons">
+                            <button class="tool-btn active" data-tool="brush" title="画笔">
+                                <span>✏️</span> 画笔
+                            </button>
+                            <button class="tool-btn" data-tool="spray" title="喷枪">
+                                <span>💨</span> 喷枪
+                            </button>
+                            <button class="tool-btn" data-tool="crayon" title="蜡笔">
+                                <span>🖍️</span> 蜡笔
+                            </button>
+                            <button class="tool-btn" data-tool="highlighter" title="荧光笔">
+                                <span>🖌️</span> 荧光笔
+                            </button>
+                            <button class="tool-btn" data-tool="line" title="直线">
+                                <span>📏</span> 直线
+                            </button>
+                            <button class="tool-btn" data-tool="rect" title="矩形">
+                                <span>⬜</span> 矩形
+                            </button>
+                            <button class="tool-btn" data-tool="circle" title="圆形">
+                                <span>⭕</span> 圆形
+                            </button>
+                            <button class="tool-btn" data-tool="arrow" title="箭头">
+                                <span>➡️</span> 箭头
+                            </button>
+                        </div>
+                    </div>
+
                     <div class="color-picker-group">
                         <label>颜色</label>
                         <div class="color-options">
@@ -121,6 +152,22 @@
                         <label>笔刷</label>
                         <input type="range" id="brushSize" min="1" max="50" value="5">
                         <span id="brushSizeValue">5px</span>
+                    </div>
+
+                    <div class="fill-group">
+                        <label>填充</label>
+                        <div class="fill-options">
+                            <button class="fill-btn active" data-fill="none" title="无填充">✖️</button>
+                            <button class="fill-btn" data-fill="solid" title="纯色填充">⬛</button>
+                            <button class="fill-btn" data-fill="gradient" title="渐变填充">🌈</button>
+                        </div>
+                        <input type="color" id="fillColor" value="#ff0000" title="填充颜色">
+                    </div>
+
+                    <div class="canvas-bg-group">
+                        <label>背景</label>
+                        <input type="color" id="canvasBgColor" value="#ffffff" title="画布背景色">
+                        <button class="action-btn" id="clearBgBtn" title="清除背景">🧹</button>
                     </div>
 
                     <div class="action-buttons">

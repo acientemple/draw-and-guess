@@ -191,6 +191,14 @@ class AIDrawAndGuess {
         // 画笔配置
         this.currentColor = '#1a1a2e';
         this.currentBrushSize = 5;
+        this.currentTool = 'brush'; // brush, spray, crayon, highlighter, line, rect, circle, arrow
+        this.currentFill = 'none'; // none, solid, gradient
+        this.fillColor = '#ff0000';
+
+        // 形状绘制状态
+        this.shapeStartX = 0;
+        this.shapeStartY = 0;
+        this.tempCanvas = null; // 用于预览形状
 
         // 撤销栈
         this.undoStack = [];
@@ -392,6 +400,32 @@ class AIDrawAndGuess {
         document.getElementById('undoBtn').addEventListener('click', () => this.undo());
         document.getElementById('guessBtn').addEventListener('click', () => this.guessWithAI());
 
+        // 工具选择
+        document.querySelectorAll('.tool-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => this.selectTool(e));
+        });
+
+        // 填充选择
+        document.querySelectorAll('.fill-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => this.selectFill(e));
+        });
+
+        // 填充颜色
+        document.getElementById('fillColor').addEventListener('input', (e) => {
+            this.fillColor = e.target.value;
+        });
+
+        // 画布背景色
+        document.getElementById('canvasBgColor').addEventListener('input', (e) => {
+            this.setCanvasBackground(e.target.value);
+        });
+
+        // 清除背景按钮
+        document.getElementById('clearBgBtn').addEventListener('click', () => {
+            this.setCanvasBackground('#ffffff');
+            document.getElementById('canvasBgColor').value = '#ffffff';
+        });
+
         // 模型选择
         document.getElementById('modelSelect').addEventListener('change', (e) => {
             this.currentModel = e.target.value;
@@ -466,6 +500,19 @@ class AIDrawAndGuess {
         const pos = this.getPosition(e);
         this.lastX = pos.x;
         this.lastY = pos.y;
+
+        // 形状工具需要记录起点并保存当前画布状态用于预览
+        if (['line', 'rect', 'circle', 'arrow'].includes(this.currentTool)) {
+            this.shapeStartX = pos.x;
+            this.shapeStartY = pos.y;
+            // 保存当前画布状态用于预览时恢复
+            this.tempImageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+        }
+
+        // 喷枪效果
+        if (this.currentTool === 'spray') {
+            this.drawSpray(pos.x, pos.y);
+        }
     }
 
     // 绘画
@@ -474,15 +521,32 @@ class AIDrawAndGuess {
 
         const pos = this.getPosition(e);
 
-        this.ctx.strokeStyle = this.currentColor;
-        this.ctx.lineWidth = this.currentBrushSize;
-        this.ctx.lineCap = 'round';
-        this.ctx.lineJoin = 'round';
+        // 形状工具不在移动时绘制，只在停止时绘制
+        if (['line', 'rect', 'circle', 'arrow'].includes(this.currentTool)) {
+            // 恢复原始画布
+            this.ctx.putImageData(this.tempImageData, 0, 0);
+            // 绘制预览形状
+            this.drawShape(this.shapeStartX, this.shapeStartY, pos.x, pos.y);
+            this.lastX = pos.x;
+            this.lastY = pos.y;
+            return;
+        }
 
-        this.ctx.beginPath();
-        this.ctx.moveTo(this.lastX, this.lastY);
-        this.ctx.lineTo(pos.x, pos.y);
-        this.ctx.stroke();
+        // 根据工具类型绘制
+        switch (this.currentTool) {
+            case 'brush':
+                this.drawBrush(pos);
+                break;
+            case 'spray':
+                this.drawSpray(pos.x, pos.y);
+                break;
+            case 'crayon':
+                this.drawCrayon(pos);
+                break;
+            case 'highlighter':
+                this.drawHighlighter(pos);
+                break;
+        }
 
         this.lastX = pos.x;
         this.lastY = pos.y;
@@ -496,11 +560,203 @@ class AIDrawAndGuess {
         }
     }
 
+    // 画笔
+    drawBrush(pos) {
+        this.ctx.strokeStyle = this.currentColor;
+        this.ctx.lineWidth = this.currentBrushSize;
+        this.ctx.lineCap = 'round';
+        this.ctx.lineJoin = 'round';
+
+        this.ctx.beginPath();
+        this.ctx.moveTo(this.lastX, this.lastY);
+        this.ctx.lineTo(pos.x, pos.y);
+        this.ctx.stroke();
+    }
+
+    // 喷枪
+    drawSpray(x, y) {
+        const density = this.currentBrushSize * 3;
+        this.ctx.fillStyle = this.currentColor;
+
+        for (let i = 0; i < density; i++) {
+            const offsetX = (Math.random() - 0.5) * this.currentBrushSize * 2;
+            const offsetY = (Math.random() - 0.5) * this.currentBrushSize * 2;
+            const alpha = Math.random() * 0.5 + 0.1;
+
+            this.ctx.globalAlpha = alpha;
+            this.ctx.beginPath();
+            this.ctx.arc(x + offsetX, y + offsetY, 1, 0, Math.PI * 2);
+            this.ctx.fill();
+        }
+        this.ctx.globalAlpha = 1;
+    }
+
+    // 蜡笔
+    drawCrayon(pos) {
+        const roughness = this.currentBrushSize / 2;
+        this.ctx.strokeStyle = this.currentColor;
+        this.ctx.lineWidth = this.currentBrushSize;
+        this.ctx.lineCap = 'round';
+        this.ctx.globalAlpha = 0.6;
+
+        // 绘制多条不规则线条模拟蜡笔效果
+        for (let i = 0; i < 3; i++) {
+            const offsetX = (Math.random() - 0.5) * roughness;
+            const offsetY = (Math.random() - 0.5) * roughness;
+
+            this.ctx.beginPath();
+            this.ctx.moveTo(this.lastX + offsetX, this.lastY + offsetY);
+            this.ctx.lineTo(pos.x + offsetX, pos.y + offsetY);
+            this.ctx.stroke();
+        }
+        this.ctx.globalAlpha = 1;
+    }
+
+    // 荧光笔
+    drawHighlighter(pos) {
+        this.ctx.strokeStyle = this.currentColor;
+        this.ctx.lineWidth = this.currentBrushSize * 3;
+        this.ctx.lineCap = 'round';
+        this.ctx.lineJoin = 'round';
+        this.ctx.globalAlpha = 0.4;
+
+        this.ctx.beginPath();
+        this.ctx.moveTo(this.lastX, this.lastY);
+        this.ctx.lineTo(pos.x, pos.y);
+        this.ctx.stroke();
+
+        this.ctx.globalAlpha = 1;
+    }
+
+    // 绘制形状
+    drawShape(startX, startY, endX, endY) {
+        this.ctx.strokeStyle = this.currentColor;
+        this.ctx.lineWidth = this.currentBrushSize;
+        this.ctx.lineCap = 'round';
+        this.ctx.lineJoin = 'round';
+
+        // 设置填充
+        if (this.currentFill !== 'none') {
+            this.ctx.fillStyle = this.currentFill === 'gradient'
+                ? this.createGradient(startX, startY, endX, endY)
+                : this.fillColor;
+        }
+
+        switch (this.currentTool) {
+            case 'line':
+                this.ctx.beginPath();
+                this.ctx.moveTo(startX, startY);
+                this.ctx.lineTo(endX, endY);
+                this.ctx.stroke();
+                break;
+
+            case 'rect':
+                const rectW = endX - startX;
+                const rectH = endY - startY;
+                if (this.currentFill !== 'none') {
+                    this.ctx.fillRect(startX, startY, rectW, rectH);
+                }
+                this.ctx.strokeRect(startX, startY, rectW, rectH);
+                break;
+
+            case 'circle':
+                const radiusX = Math.abs(endX - startX) / 2;
+                const radiusY = Math.abs(endY - startY) / 2;
+                const centerX = startX + (endX - startX) / 2;
+                const centerY = startY + (endY - startY) / 2;
+                this.ctx.beginPath();
+                this.ctx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, Math.PI * 2);
+                if (this.currentFill !== 'none') {
+                    this.ctx.fill();
+                }
+                this.ctx.stroke();
+                break;
+
+            case 'arrow':
+                this.drawArrow(startX, startY, endX, endY);
+                break;
+        }
+    }
+
+    // 绘制箭头
+    drawArrow(startX, startY, endX, endY) {
+        const headLen = this.currentBrushSize * 3;
+        const angle = Math.atan2(endY - startY, endX - startX);
+
+        // 绘制主线
+        this.ctx.beginPath();
+        this.ctx.moveTo(startX, startY);
+        this.ctx.lineTo(endX, endY);
+        this.ctx.stroke();
+
+        // 绘制箭头头部
+        this.ctx.beginPath();
+        this.ctx.moveTo(endX, endY);
+        this.ctx.lineTo(
+            endX - headLen * Math.cos(angle - Math.PI / 6),
+            endY - headLen * Math.sin(angle - Math.PI / 6)
+        );
+        this.ctx.moveTo(endX, endY);
+        this.ctx.lineTo(
+            endX - headLen * Math.cos(angle + Math.PI / 6),
+            endY - headLen * Math.sin(angle + Math.PI / 6)
+        );
+        this.ctx.stroke();
+    }
+
+    // 创建渐变
+    createGradient(x1, y1, x2, y2) {
+        const gradient = this.ctx.createLinearGradient(x1, y1, x2, y2);
+        gradient.addColorStop(0, this.currentColor);
+        gradient.addColorStop(1, this.fillColor);
+        return gradient;
+    }
+
+    // 选择工具
+    selectTool(e) {
+        const btn = e.target.closest('.tool-btn');
+        this.currentTool = btn.dataset.tool;
+
+        document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+    }
+
+    // 选择填充
+    selectFill(e) {
+        const btn = e.target.closest('.fill-btn');
+        this.currentFill = btn.dataset.fill;
+
+        document.querySelectorAll('.fill-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+    }
+
+    // 设置画布背景
+    setCanvasBackground(color) {
+        // 保存当前画布内容
+        const imageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+
+        // 填充背景色
+        this.ctx.fillStyle = color;
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+        // 恢复画布内容（带透明度混合）
+        this.ctx.globalAlpha = 1;
+        this.ctx.putImageData(imageData, 0, 0);
+        this.hasDrawn = true;
+    }
+
     // 停止绘画
     stopDrawing() {
         if (this.isDrawing) {
             this.isDrawing = false;
-            this.saveCanvasState();
+
+            // 形状工具在停止时保存最终状态
+            if (['line', 'rect', 'circle', 'arrow'].includes(this.currentTool)) {
+                this.saveCanvasState();
+                this.tempCanvas = null;
+            } else {
+                this.saveCanvasState();
+            }
         }
     }
 
