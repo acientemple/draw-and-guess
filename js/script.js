@@ -412,11 +412,6 @@ class AIDrawAndGuess {
             btn.addEventListener('click', (e) => this.selectTool(e));
         });
 
-        // 形状样式选择
-        document.querySelectorAll('.shape-toggle').forEach(btn => {
-            btn.addEventListener('click', (e) => this.selectShapeStyle(e));
-        });
-
         // 前景色选择
         document.getElementById('strokeColor').addEventListener('input', (e) => {
             this.strokeColor = e.target.value;
@@ -536,6 +531,9 @@ class AIDrawAndGuess {
 
     // 开始绘画
     startDrawing(e) {
+        // 隐藏开始绘画提示
+        document.querySelector('.canvas-container').classList.remove('empty');
+
         const pos = this.getPosition(e);
 
         // 吸管工具 - 立即取色
@@ -748,7 +746,169 @@ class AIDrawAndGuess {
             case 'arrow':
                 this.drawArrow(startX, startY, endX, endY);
                 break;
+
+            case 'star':
+                this.drawStar(startX, startY, endX, endY);
+                break;
+
+            case 'heart':
+                this.drawHeart(startX, startY, endX, endY);
+                break;
+
+            case 'leaf':
+                this.drawLeaf(startX, startY, endX, endY);
+                break;
+
+            case 'smile':
+                this.drawSmile(startX, startY, endX, endY);
+                break;
+
+            case 'sad':
+                this.drawSad(startX, startY, endX, endY);
+                break;
         }
+    }
+
+    // 绘制星星
+    drawStar(x1, y1, x2, y2) {
+        const cx = (x1 + x2) / 2;
+        const cy = (y1 + y2) / 2;
+        const outerRadius = Math.min(Math.abs(x2 - x1), Math.abs(y2 - y1)) / 2;
+        const innerRadius = outerRadius * 0.4;
+        const points = 5;
+
+        this.ctx.beginPath();
+        for (let i = 0; i < points * 2; i++) {
+            const radius = i % 2 === 0 ? outerRadius : innerRadius;
+            const angle = (i * Math.PI / points) - Math.PI / 2;
+            const x = cx + radius * Math.cos(angle);
+            const y = cy + radius * Math.sin(angle);
+            if (i === 0) {
+                this.ctx.moveTo(x, y);
+            } else {
+                this.ctx.lineTo(x, y);
+            }
+        }
+        this.ctx.closePath();
+        if (this.fillColor) {
+            this.ctx.fill();
+        }
+        this.ctx.stroke();
+    }
+
+    // 绘制心形
+    drawHeart(x1, y1, x2, y2) {
+        const cx = (x1 + x2) / 2;
+        const cy = (y1 + y2) / 2;
+        const size = Math.min(Math.abs(x2 - x1), Math.abs(y2 - y1)) / 2;
+
+        this.ctx.beginPath();
+        // 贝塞尔曲线绘制心形
+        this.ctx.moveTo(cx, cy + size);
+        this.ctx.bezierCurveTo(cx - size * 2, cy - size * 0.5, cx - size * 2, cy - size * 1.5, cx, cy - size * 0.8);
+        this.ctx.bezierCurveTo(cx + size * 2, cy - size * 1.5, cx + size * 2, cy - size * 0.5, cx, cy + size);
+        if (this.fillColor) {
+            this.ctx.fill();
+        }
+        this.ctx.stroke();
+    }
+
+    // 绘制叶子
+    drawLeaf(x1, y1, x2, y2) {
+        const cx = (x1 + x2) / 2;
+        const cy = (y1 + y2) / 2;
+        const w = Math.abs(x2 - x1);
+        const h = Math.abs(y2 - y1);
+
+        this.ctx.beginPath();
+        // 叶子形状 - 左边半圆 + 右边半圆 + 底部尖
+        this.ctx.moveTo(cx - w * 0.4, cy);
+        this.ctx.quadraticCurveTo(cx - w * 0.5, cy - h * 0.5, cx, cy - h * 0.5);
+        this.ctx.quadraticCurveTo(cx + w * 0.5, cy - h * 0.5, cx + w * 0.4, cy);
+        this.ctx.quadraticCurveTo(cx + w * 0.3, cy + h * 0.3, cx, cy + h * 0.5);
+        this.ctx.quadraticCurveTo(cx - w * 0.3, cy + h * 0.3, cx - w * 0.4, cy);
+        if (this.fillColor) {
+            this.ctx.fill();
+        }
+        this.ctx.stroke();
+
+        // 叶脉
+        this.ctx.beginPath();
+        this.ctx.moveTo(cx, cy - h * 0.4);
+        this.ctx.lineTo(cx, cy + h * 0.4);
+        this.ctx.stroke();
+    }
+
+    // 绘制笑脸
+    drawSmile(x1, y1, x2, y2) {
+        const cx = (x1 + x2) / 2;
+        const cy = (y1 + y2) / 2;
+        const radius = Math.min(Math.abs(x2 - x1), Math.abs(y2 - y1)) / 2;
+
+        // 脸
+        this.ctx.beginPath();
+        this.ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+        if (this.fillColor) {
+            this.ctx.fill();
+        }
+        this.ctx.stroke();
+
+        // 眼睛
+        const eyeRadius = radius * 0.15;
+        const eyeOffsetX = radius * 0.35;
+        const eyeOffsetY = radius * 0.25;
+        this.ctx.beginPath();
+        this.ctx.arc(cx - eyeOffsetX, cy - eyeOffsetY, eyeRadius, 0, Math.PI * 2);
+        this.ctx.arc(cx + eyeOffsetX, cy - eyeOffsetY, eyeRadius, 0, Math.PI * 2);
+        this.ctx.fill();
+
+        // 嘴巴 (笑脸)
+        this.ctx.beginPath();
+        this.ctx.arc(cx, cy, radius * 0.5, 0.2 * Math.PI, 0.8 * Math.PI);
+        this.ctx.stroke();
+    }
+
+    // 绘制哭脸
+    drawSad(x1, y1, x2, y2) {
+        const cx = (x1 + x2) / 2;
+        const cy = (y1 + y2) / 2;
+        const radius = Math.min(Math.abs(x2 - x1), Math.abs(y2 - y1)) / 2;
+
+        // 脸
+        this.ctx.beginPath();
+        this.ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+        if (this.fillColor) {
+            this.ctx.fill();
+        }
+        this.ctx.stroke();
+
+        // 眼睛
+        const eyeRadius = radius * 0.15;
+        const eyeOffsetX = radius * 0.35;
+        const eyeOffsetY = radius * 0.25;
+        this.ctx.beginPath();
+        this.ctx.arc(cx - eyeOffsetX, cy - eyeOffsetY, eyeRadius, 0, Math.PI * 2);
+        this.ctx.arc(cx + eyeOffsetX, cy - eyeOffsetY, eyeRadius, 0, Math.PI * 2);
+        this.ctx.fill();
+
+        // 眼泪
+        const tearY = cy - eyeOffsetY + eyeRadius;
+        this.ctx.beginPath();
+        this.ctx.moveTo(cx - eyeOffsetX - eyeRadius, tearY);
+        this.ctx.lineTo(cx - eyeOffsetX - eyeRadius * 0.5, tearY + radius * 0.3);
+        this.ctx.lineTo(cx - eyeOffsetX + eyeRadius * 0.5, tearY);
+        this.ctx.fill();
+
+        this.ctx.beginPath();
+        this.ctx.moveTo(cx + eyeOffsetX - eyeRadius, tearY);
+        this.ctx.lineTo(cx + eyeOffsetX - eyeRadius * 0.5, tearY + radius * 0.3);
+        this.ctx.lineTo(cx + eyeOffsetX + eyeRadius * 0.5, tearY);
+        this.ctx.fill();
+
+        // 嘴巴 (哭脸)
+        this.ctx.beginPath();
+        this.ctx.arc(cx, cy + radius * 0.6, radius * 0.4, 1.2 * Math.PI, 1.8 * Math.PI);
+        this.ctx.stroke();
     }
 
     // 绘制箭头
@@ -933,15 +1093,6 @@ class AIDrawAndGuess {
                 btn.click();
             }
         });
-    }
-
-    // 选择形状样式
-    selectShapeStyle(e) {
-        const btn = e.target.closest('.shape-toggle');
-        this.shapeStyle = btn.dataset.shapeStyle;
-
-        document.querySelectorAll('.shape-toggle').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
     }
 
     // 清空画布
