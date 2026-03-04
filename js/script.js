@@ -189,16 +189,24 @@ class AIDrawAndGuess {
         this.lastY = 0;
 
         // 画笔配置
-        this.currentColor = '#1a1a2e';
+        this.strokeColor = '#000000';  // 前景色/描边色
+        this.fillColor = null;         // 填充色 (null = 无填充)
         this.currentBrushSize = 5;
-        this.currentTool = 'brush'; // brush, spray, crayon, highlighter, line, rect, circle, arrow
-        this.currentFill = 'none'; // none, solid, gradient
-        this.fillColor = '#ff0000';
+        this.currentTool = 'brush';    // brush, eraser, fill, eyedropper, spray, crayon, highlighter, line, rect, circle, arrow
+        this.shapeStyle = 'outline';   // outline, filled
 
         // 形状绘制状态
         this.shapeStartX = 0;
         this.shapeStartY = 0;
-        this.tempCanvas = null; // 用于预览形状
+        this.tempImageData = null;     // 用于预览形状
+
+        // 撤销/重做
+        this.undoStack = [];
+        this.redoStack = [];
+        this.maxUndoSteps = 50;
+
+        // 画布背景色
+        this.canvasBgColor = '#ffffff';
 
         // 撤销栈
         this.undoStack = [];
@@ -383,36 +391,46 @@ class AIDrawAndGuess {
             btn.addEventListener('click', (e) => this.selectColor(e));
         });
 
-        // 自定义颜色
-        document.getElementById('customColor').addEventListener('input', (e) => {
-            this.currentColor = e.target.value;
-            document.querySelectorAll('.color-btn').forEach(btn => btn.classList.remove('active'));
-        });
-
         // 笔刷大小
         document.getElementById('brushSize').addEventListener('input', (e) => {
-            this.currentBrushSize = e.target.value;
-            document.getElementById('brushSizeValue').textContent = `${e.target.value}px`;
+            this.currentBrushSize = parseInt(e.target.value);
+            document.getElementById('brushSizeValue').textContent = e.target.value;
         });
 
         // 功能按钮
         document.getElementById('clearBtn').addEventListener('click', () => this.clearCanvas());
         document.getElementById('undoBtn').addEventListener('click', () => this.undo());
+        document.getElementById('redoBtn').addEventListener('click', () => this.redo());
         document.getElementById('guessBtn').addEventListener('click', () => this.guessWithAI());
+        document.getElementById('newCanvasBtn').addEventListener('click', () => this.newCanvas());
+        document.getElementById('canvasBgBtn').addEventListener('click', () => {
+            document.getElementById('canvasBgColor').click();
+        });
 
         // 工具选择
         document.querySelectorAll('.tool-btn').forEach(btn => {
             btn.addEventListener('click', (e) => this.selectTool(e));
         });
 
-        // 填充选择
-        document.querySelectorAll('.fill-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => this.selectFill(e));
+        // 形状样式选择
+        document.querySelectorAll('.shape-toggle').forEach(btn => {
+            btn.addEventListener('click', (e) => this.selectShapeStyle(e));
         });
 
-        // 填充颜色
+        // 前景色选择
+        document.getElementById('strokeColor').addEventListener('input', (e) => {
+            this.strokeColor = e.target.value;
+            document.getElementById('currentStrokeColor').style.background = e.target.value;
+        });
+
+        // 填充色选择
         document.getElementById('fillColor').addEventListener('input', (e) => {
             this.fillColor = e.target.value;
+        });
+
+        // 无填充按钮
+        document.getElementById('noFillBtn').addEventListener('click', () => {
+            this.fillColor = null;
         });
 
         // 画布背景色
@@ -420,10 +438,32 @@ class AIDrawAndGuess {
             this.setCanvasBackground(e.target.value);
         });
 
-        // 清除背景按钮
-        document.getElementById('clearBgBtn').addEventListener('click', () => {
-            this.setCanvasBackground('#ffffff');
-            document.getElementById('canvasBgColor').value = '#ffffff';
+        // 键盘快捷键
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                if (e.key === 'z') {
+                    e.preventDefault();
+                    if (e.shiftKey) {
+                        this.redo();
+                    } else {
+                        this.undo();
+                    }
+                } else if (e.key === 'y') {
+                    e.preventDefault();
+                    this.redo();
+                }
+            } else {
+                // 工具快捷键
+                switch(e.key.toLowerCase()) {
+                    case 'b': this.selectToolByName('brush'); break;
+                    case 'e': this.selectToolByName('eraser'); break;
+                    case 'g': this.selectToolByName('fill'); break;
+                    case 'i': this.selectToolByName('eyedropper'); break;
+                    case 'l': this.selectToolByName('line'); break;
+                    case 'r': this.selectToolByName('rect'); break;
+                    case 'o': this.selectToolByName('circle'); break;
+                }
+            }
         });
 
         // 模型选择
@@ -496,8 +536,24 @@ class AIDrawAndGuess {
 
     // 开始绘画
     startDrawing(e) {
-        this.isDrawing = true;
         const pos = this.getPosition(e);
+
+        // 吸管工具 - 立即取色
+        if (this.currentTool === 'eyedropper') {
+            this.eyedropper(pos.x, pos.y);
+            return;
+        }
+
+        // 油漆桶填充
+        if (this.currentTool === 'fill') {
+            this.saveCanvasState();
+            this.floodFill(pos.x, pos.y, this.fillColor || this.strokeColor);
+            this.hasDrawn = true;
+            this.updateCanvasOverlay();
+            return;
+        }
+
+        this.isDrawing = true;
         this.lastX = pos.x;
         this.lastY = pos.y;
 
@@ -505,13 +561,13 @@ class AIDrawAndGuess {
         if (['line', 'rect', 'circle', 'arrow'].includes(this.currentTool)) {
             this.shapeStartX = pos.x;
             this.shapeStartY = pos.y;
-            // 保存当前画布状态用于预览时恢复
             this.tempImageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
         }
 
-        // 喷枪效果
+        // 喷枪效果持续绘制
         if (this.currentTool === 'spray') {
             this.drawSpray(pos.x, pos.y);
+            this.hasDrawn = true;
         }
     }
 
@@ -521,11 +577,20 @@ class AIDrawAndGuess {
 
         const pos = this.getPosition(e);
 
-        // 形状工具不在移动时绘制，只在停止时绘制
+        // 橡皮擦
+        if (this.currentTool === 'eraser') {
+            this.drawEraser(pos);
+            this.lastX = pos.x;
+            this.lastY = pos.y;
+            this.hasDrawn = true;
+            this.lastDrawTime = Date.now();
+            this.updateCanvasOverlay();
+            return;
+        }
+
+        // 形状工具预览
         if (['line', 'rect', 'circle', 'arrow'].includes(this.currentTool)) {
-            // 恢复原始画布
             this.ctx.putImageData(this.tempImageData, 0, 0);
-            // 绘制预览形状
             this.drawShape(this.shapeStartX, this.shapeStartY, pos.x, pos.y);
             this.lastX = pos.x;
             this.lastY = pos.y;
@@ -562,8 +627,21 @@ class AIDrawAndGuess {
 
     // 画笔
     drawBrush(pos) {
-        this.ctx.strokeStyle = this.currentColor;
+        this.ctx.strokeStyle = this.strokeColor;
         this.ctx.lineWidth = this.currentBrushSize;
+        this.ctx.lineCap = 'round';
+        this.ctx.lineJoin = 'round';
+
+        this.ctx.beginPath();
+        this.ctx.moveTo(this.lastX, this.lastY);
+        this.ctx.lineTo(pos.x, pos.y);
+        this.ctx.stroke();
+    }
+
+    // 橡皮擦
+    drawEraser(pos) {
+        this.ctx.strokeStyle = this.canvasBgColor;
+        this.ctx.lineWidth = this.currentBrushSize * 2;
         this.ctx.lineCap = 'round';
         this.ctx.lineJoin = 'round';
 
@@ -575,17 +653,17 @@ class AIDrawAndGuess {
 
     // 喷枪
     drawSpray(x, y) {
-        const density = this.currentBrushSize * 3;
-        this.ctx.fillStyle = this.currentColor;
+        const density = this.currentBrushSize * 4;
+        this.ctx.fillStyle = this.strokeColor;
 
         for (let i = 0; i < density; i++) {
-            const offsetX = (Math.random() - 0.5) * this.currentBrushSize * 2;
-            const offsetY = (Math.random() - 0.5) * this.currentBrushSize * 2;
-            const alpha = Math.random() * 0.5 + 0.1;
+            const offsetX = (Math.random() - 0.5) * this.currentBrushSize * 3;
+            const offsetY = (Math.random() - 0.5) * this.currentBrushSize * 3;
+            const alpha = Math.random() * 0.4 + 0.1;
 
             this.ctx.globalAlpha = alpha;
             this.ctx.beginPath();
-            this.ctx.arc(x + offsetX, y + offsetY, 1, 0, Math.PI * 2);
+            this.ctx.arc(x + offsetX, y + offsetY, 1.5, 0, Math.PI * 2);
             this.ctx.fill();
         }
         this.ctx.globalAlpha = 1;
@@ -594,13 +672,12 @@ class AIDrawAndGuess {
     // 蜡笔
     drawCrayon(pos) {
         const roughness = this.currentBrushSize / 2;
-        this.ctx.strokeStyle = this.currentColor;
+        this.ctx.strokeStyle = this.strokeColor;
         this.ctx.lineWidth = this.currentBrushSize;
         this.ctx.lineCap = 'round';
-        this.ctx.globalAlpha = 0.6;
+        this.ctx.globalAlpha = 0.5;
 
-        // 绘制多条不规则线条模拟蜡笔效果
-        for (let i = 0; i < 3; i++) {
+        for (let i = 0; i < 4; i++) {
             const offsetX = (Math.random() - 0.5) * roughness;
             const offsetY = (Math.random() - 0.5) * roughness;
 
@@ -614,11 +691,11 @@ class AIDrawAndGuess {
 
     // 荧光笔
     drawHighlighter(pos) {
-        this.ctx.strokeStyle = this.currentColor;
-        this.ctx.lineWidth = this.currentBrushSize * 3;
+        this.ctx.strokeStyle = this.strokeColor;
+        this.ctx.lineWidth = this.currentBrushSize * 4;
         this.ctx.lineCap = 'round';
         this.ctx.lineJoin = 'round';
-        this.ctx.globalAlpha = 0.4;
+        this.ctx.globalAlpha = 0.35;
 
         this.ctx.beginPath();
         this.ctx.moveTo(this.lastX, this.lastY);
@@ -630,17 +707,13 @@ class AIDrawAndGuess {
 
     // 绘制形状
     drawShape(startX, startY, endX, endY) {
-        this.ctx.strokeStyle = this.currentColor;
+        this.ctx.strokeStyle = this.strokeColor;
+        this.ctx.fillStyle = this.fillColor || this.strokeColor;
         this.ctx.lineWidth = this.currentBrushSize;
         this.ctx.lineCap = 'round';
         this.ctx.lineJoin = 'round';
 
-        // 设置填充
-        if (this.currentFill !== 'none') {
-            this.ctx.fillStyle = this.currentFill === 'gradient'
-                ? this.createGradient(startX, startY, endX, endY)
-                : this.fillColor;
-        }
+        const useFill = this.fillColor !== null || this.shapeStyle === 'filled';
 
         switch (this.currentTool) {
             case 'line':
@@ -651,24 +724,24 @@ class AIDrawAndGuess {
                 break;
 
             case 'rect':
-                const rectW = endX - startX;
-                const rectH = endY - startY;
-                if (this.currentFill !== 'none') {
-                    this.ctx.fillRect(startX, startY, rectW, rectH);
+                const x = Math.min(startX, endX);
+                const y = Math.min(startY, endY);
+                const w = Math.abs(endX - startX);
+                const h = Math.abs(endY - startY);
+                if (useFill) {
+                    this.ctx.fillRect(x, y, w, h);
                 }
-                this.ctx.strokeRect(startX, startY, rectW, rectH);
+                this.ctx.strokeRect(x, y, w, h);
                 break;
 
             case 'circle':
-                const radiusX = Math.abs(endX - startX) / 2;
-                const radiusY = Math.abs(endY - startY) / 2;
-                const centerX = startX + (endX - startX) / 2;
-                const centerY = startY + (endY - startY) / 2;
+                const rx = Math.abs(endX - startX) / 2;
+                const ry = Math.abs(endY - startY) / 2;
+                const cx = startX + (endX - startX) / 2;
+                const cy = startY + (endY - startY) / 2;
                 this.ctx.beginPath();
-                this.ctx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, Math.PI * 2);
-                if (this.currentFill !== 'none') {
-                    this.ctx.fill();
-                }
+                this.ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+                if (useFill) this.ctx.fill();
                 this.ctx.stroke();
                 break;
 
@@ -680,16 +753,14 @@ class AIDrawAndGuess {
 
     // 绘制箭头
     drawArrow(startX, startY, endX, endY) {
-        const headLen = this.currentBrushSize * 3;
+        const headLen = Math.max(10, this.currentBrushSize * 3);
         const angle = Math.atan2(endY - startY, endX - startX);
 
-        // 绘制主线
         this.ctx.beginPath();
         this.ctx.moveTo(startX, startY);
         this.ctx.lineTo(endX, endY);
         this.ctx.stroke();
 
-        // 绘制箭头头部
         this.ctx.beginPath();
         this.ctx.moveTo(endX, endY);
         this.ctx.lineTo(
@@ -704,45 +775,128 @@ class AIDrawAndGuess {
         this.ctx.stroke();
     }
 
-    // 创建渐变
-    createGradient(x1, y1, x2, y2) {
-        const gradient = this.ctx.createLinearGradient(x1, y1, x2, y2);
-        gradient.addColorStop(0, this.currentColor);
-        gradient.addColorStop(1, this.fillColor);
-        return gradient;
+    // 油漆桶填充 (Flood Fill)
+    floodFill(startX, startY, fillColor) {
+        const imageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+        const data = imageData.data;
+        const width = this.canvas.width;
+        const height = this.canvas.height;
+
+        // 获取起始位置的颜色
+        const startPos = (Math.floor(startY) * width + Math.floor(startX)) * 4;
+        const startR = data[startPos];
+        const startG = data[startPos + 1];
+        const startB = data[startPos + 2];
+
+        // 转换填充颜色
+        const fillR = parseInt(fillColor.slice(1, 3), 16);
+        const fillG = parseInt(fillColor.slice(3, 5), 16);
+        const fillB = parseInt(fillColor.slice(5, 7), 16);
+
+        // 如果颜色相同，不填充
+        if (startR === fillR && startG === fillG && startB === fillB) return;
+
+        const tolerance = 32; // 颜色容差
+        const stack = [[Math.floor(startX), Math.floor(startY)]];
+        const visited = new Set();
+
+        const colorMatch = (x, y) => {
+            const pos = (y * width + x) * 4;
+            return Math.abs(data[pos] - startR) <= tolerance &&
+                   Math.abs(data[pos + 1] - startG) <= tolerance &&
+                   Math.abs(data[pos + 2] - startB) <= tolerance;
+        };
+
+        while (stack.length > 0) {
+            const [x, y] = stack.pop();
+            const key = `${x},${y}`;
+
+            if (x < 0 || x >= width || y < 0 || y >= height) continue;
+            if (visited.has(key)) continue;
+            if (!colorMatch(x, y)) continue;
+
+            visited.add(key);
+
+            const pos = (y * width + x) * 4;
+            data[pos] = fillR;
+            data[pos + 1] = fillG;
+            data[pos + 2] = fillB;
+            data[pos + 3] = 255;
+
+            stack.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
+        }
+
+        this.ctx.putImageData(imageData, 0, 0);
+    }
+
+    // 吸管取色
+    eyedropper(x, y) {
+        const imageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+        const data = imageData.data;
+        const pos = (Math.floor(y) * this.canvas.width + Math.floor(x)) * 4;
+
+        const r = data[pos];
+        const g = data[pos + 1];
+        const b = data[pos + 2];
+
+        const hex = '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join('');
+
+        this.strokeColor = hex;
+        document.getElementById('strokeColor').value = hex;
+        document.getElementById('currentStrokeColor').style.background = hex;
+
+        // 更新颜色按钮选中状态
+        document.querySelectorAll('.color-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.color === hex);
+        });
+
+        // 切换回画笔工具
+        this.selectToolByName('brush');
     }
 
     // 选择工具
     selectTool(e) {
         const btn = e.target.closest('.tool-btn');
+        if (!btn) return;
+
         this.currentTool = btn.dataset.tool;
+
+        // 改变光标
+        if (this.currentTool === 'fill') {
+            this.canvas.style.cursor = 'crosshair';
+        } else if (this.currentTool === 'eyedropper') {
+            this.canvas.style.cursor = 'copy';
+        } else if (this.currentTool === 'eraser') {
+            this.canvas.style.cursor = 'cell';
+        } else {
+            this.canvas.style.cursor = 'crosshair';
+        }
 
         document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
     }
 
-    // 选择填充
-    selectFill(e) {
-        const btn = e.target.closest('.fill-btn');
-        this.currentFill = btn.dataset.fill;
-
-        document.querySelectorAll('.fill-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-    }
-
     // 设置画布背景
     setCanvasBackground(color) {
-        // 保存当前画布内容
-        const imageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
-
-        // 填充背景色
+        this.canvasBgColor = color;
         this.ctx.fillStyle = color;
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-
-        // 恢复画布内容（带透明度混合）
-        this.ctx.globalAlpha = 1;
-        this.ctx.putImageData(imageData, 0, 0);
         this.hasDrawn = true;
+        this.saveCanvasState();
+    }
+
+    // 新建画布
+    newCanvas() {
+        if (confirm('新建画布将清除当前内容，确定继续吗？')) {
+            this.ctx.fillStyle = this.canvasBgColor;
+            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+            this.hasDrawn = false;
+            this.undoStack = [];
+            this.redoStack = [];
+            this.saveCanvasState();
+            this.updateCanvasOverlay();
+            document.getElementById('guessContent').innerHTML = '<p class="placeholder">开始绘画，让我猜猜你画的是什么~</p>';
+        }
     }
 
     // 停止绘画
@@ -763,16 +917,37 @@ class AIDrawAndGuess {
     // 选择颜色
     selectColor(e) {
         const btn = e.target;
-        this.currentColor = btn.dataset.color;
+        this.strokeColor = btn.dataset.color;
+
+        document.getElementById('strokeColor').value = btn.dataset.color;
+        document.getElementById('currentStrokeColor').style.background = btn.dataset.color;
 
         document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+    }
+
+    // 通过名称选择工具
+    selectToolByName(toolName) {
+        document.querySelectorAll('.tool-btn').forEach(btn => {
+            if (btn.dataset.tool === toolName) {
+                btn.click();
+            }
+        });
+    }
+
+    // 选择形状样式
+    selectShapeStyle(e) {
+        const btn = e.target.closest('.shape-toggle');
+        this.shapeStyle = btn.dataset.shapeStyle;
+
+        document.querySelectorAll('.shape-toggle').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
     }
 
     // 清空画布
     clearCanvas() {
         this.saveCanvasState();
-        this.ctx.fillStyle = '#ffffff';
+        this.ctx.fillStyle = this.canvasBgColor;
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         this.hasDrawn = false;
         this.updateCanvasOverlay();
@@ -801,6 +976,21 @@ class AIDrawAndGuess {
 
             const previous = this.undoStack[this.undoStack.length - 1];
             this.ctx.putImageData(previous, 0, 0);
+            this.showToast('已撤销');
+        } else {
+            this.showToast('没有可撤销的操作');
+        }
+    }
+
+    // 重做
+    redo() {
+        if (this.redoStack.length > 0) {
+            const next = this.redoStack.pop();
+            this.undoStack.push(next);
+            this.ctx.putImageData(next, 0, 0);
+            this.showToast('已重做');
+        } else {
+            this.showToast('没有可重做的操作');
         }
     }
 

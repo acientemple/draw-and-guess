@@ -101,82 +101,113 @@
                 </div>
 
                 <div class="tools-bar">
-                    <!-- 工具类型选择 -->
-                    <div class="tool-type-group">
-                        <label>工具</label>
+                    <!-- 主工具栏 -->
+                    <div class="tool-section">
+                        <label>绘图</label>
                         <div class="tool-buttons">
-                            <button class="tool-btn active" data-tool="brush" title="画笔">
-                                <span>✏️</span> 画笔
+                            <button class="tool-btn active" data-tool="brush" title="画笔 (B)">
+                                <span>✏️</span>
                             </button>
+                            <button class="tool-btn" data-tool="eraser" title="橡皮擦 (E)">
+                                <span>🧽</span>
+                            </button>
+                            <button class="tool-btn" data-tool="fill" title="油漆桶填充 (G)">
+                                <span>🪣</span>
+                            </button>
+                            <button class="tool-btn" data-tool="eyedropper" title="吸管取色 (I)">
+                                <span>💧</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="tool-section">
+                        <label>特效</label>
+                        <div class="tool-buttons">
                             <button class="tool-btn" data-tool="spray" title="喷枪">
-                                <span>💨</span> 喷枪
+                                <span>💨</span>
                             </button>
                             <button class="tool-btn" data-tool="crayon" title="蜡笔">
-                                <span>🖍️</span> 蜡笔
+                                <span>🖍️</span>
                             </button>
                             <button class="tool-btn" data-tool="highlighter" title="荧光笔">
-                                <span>🖌️</span> 荧光笔
+                                <span>🖌️</span>
                             </button>
-                            <button class="tool-btn" data-tool="line" title="直线">
-                                <span>📏</span> 直线
+                        </div>
+                    </div>
+
+                    <div class="tool-section">
+                        <label>形状</label>
+                        <div class="tool-buttons">
+                            <button class="tool-btn" data-tool="line" title="直线 (L)">
+                                <span>📏</span>
                             </button>
-                            <button class="tool-btn" data-tool="rect" title="矩形">
-                                <span>⬜</span> 矩形
+                            <button class="tool-btn" data-tool="rect" title="矩形 (R)">
+                                <span>⬜</span>
                             </button>
-                            <button class="tool-btn" data-tool="circle" title="圆形">
-                                <span>⭕</span> 圆形
+                            <button class="tool-btn" data-tool="circle" title="圆形 (O)">
+                                <span>⭕</span>
                             </button>
                             <button class="tool-btn" data-tool="arrow" title="箭头">
-                                <span>➡️</span> 箭头
+                                <span>➡️</span>
                             </button>
                         </div>
                     </div>
 
                     <div class="color-picker-group">
-                        <label>颜色</label>
+                        <label>前景色</label>
+                        <div class="color-row">
+                            <input type="color" id="strokeColor" value="#000000" title="前景色">
+                            <div class="current-color" id="currentStrokeColor" style="background: #000000;"></div>
+                        </div>
                         <div class="color-options">
-                            <button class="color-btn active" style="background: #1a1a2e;" data-color="#1a1a2e" title="黑色"></button>
-                            <button class="color-btn" style="background: #e94560;" data-color="#e94560" title="珊瑚红"></button>
-                            <button class="color-btn" style="background: #0f3460;" data-color="#0f3460" title="深蓝"></button>
-                            <button class="color-btn" style="background: #00d9ff;" data-color="#00d9ff" title="青色"></button>
-                            <button class="color-btn" style="background: #39da8a;" data-color="#39da8a" title="绿色"></button>
-                            <button class="color-btn" style="background: #ffc107;" data-color="#ffc107" title="黄色"></button>
-                            <button class="color-btn" style="background: #ff6b35;" data-color="#ff6b35" title="橙色"></button>
-                            <button class="color-btn" style="background: #9b59b6;" data-color="#9b59b6" title="紫色"></button>
-                            <button class="color-btn" style="background: #ffffff; border: 1px solid #444;" data-color="#ffffff" title="橡皮擦"></button>
-                            <input type="color" id="customColor" value="#000000" title="自定义颜色">
+                            <button class="color-btn active" style="background: #000000;" data-color="#000000"></button>
+                            <button class="color-btn" style="background: #1a1a2e;" data-color="#1a1a2e"></button>
+                            <button class="color-btn" style="background: #e94560;" data-color="#e94560"></button>
+                            <button class="color-btn" style="background: #0f3460;" data-color="#0f3460"></button>
+                            <button class="color-btn" style="background: #00d9ff;" data-color="#00d9ff"></button>
+                            <button class="color-btn" style="background: #39da8a;" data-color="#39da8a"></button>
+                            <button class="color-btn" style="background: #ffc107;" data-color="#ffc107"></button>
+                            <button class="color-btn" style="background: #ff6b35;" data-color="#ff6b35"></button>
+                            <button class="color-btn" style="background: #9b59b6;" data-color="#9b59b6"></button>
+                        </div>
+                    </div>
+
+                    <div class="color-picker-group">
+                        <label>填充色</label>
+                        <div class="color-row">
+                            <input type="color" id="fillColor" value="#e94560" title="填充色">
+                            <button class="no-fill-btn" id="noFillBtn" title="无填充">✖️</button>
                         </div>
                     </div>
 
                     <div class="brush-size-group">
-                        <label>笔刷</label>
+                        <label>粗细</label>
                         <input type="range" id="brushSize" min="1" max="50" value="5">
-                        <span id="brushSizeValue">5px</span>
+                        <span id="brushSizeValue">5</span>
                     </div>
 
-                    <div class="fill-group">
-                        <label>填充</label>
-                        <div class="fill-options">
-                            <button class="fill-btn active" data-fill="none" title="无填充">✖️</button>
-                            <button class="fill-btn" data-fill="solid" title="纯色填充">⬛</button>
-                            <button class="fill-btn" data-fill="gradient" title="渐变填充">🌈</button>
+                    <div class="shape-options">
+                        <label>形状</label>
+                        <div class="shape-toggles">
+                            <button class="shape-toggle active" data-shape-style="outline" title="空心">□</button>
+                            <button class="shape-toggle" data-shape-style="filled" title="实心">■</button>
                         </div>
-                        <input type="color" id="fillColor" value="#ff0000" title="填充颜色">
-                    </div>
-
-                    <div class="canvas-bg-group">
-                        <label>背景</label>
-                        <input type="color" id="canvasBgColor" value="#ffffff" title="画布背景色">
-                        <button class="action-btn" id="clearBgBtn" title="清除背景">🧹</button>
                     </div>
 
                     <div class="action-buttons">
-                        <button class="action-btn" id="undoBtn" title="撤销">
-                            <span>↩️</span> 撤销
+                        <button class="action-btn" id="undoBtn" title="撤销 (Ctrl+Z)">
+                            <span>↩️</span>
                         </button>
-                        <button class="action-btn" id="clearBtn" title="清空">
-                            <span>🗑️</span> 清空
+                        <button class="action-btn" id="redoBtn" title="重做 (Ctrl+Y)">
+                            <span>↪️</span>
                         </button>
+                        <button class="action-btn" id="clearBtn" title="清空画布">
+                            <span>🗑️</span>
+                        </button>
+                        <button class="action-btn" id="newCanvasBtn" title="新建画布">
+                            <span>📄</span>
+                        </button>
+                    </div>
                         <button class="action-btn primary" id="guessBtn" title="让AI猜猜">
                             <span>🤔</span> 让AI猜猜
                         </button>
@@ -188,7 +219,14 @@
                         <input type="checkbox" id="autoGuess" checked>
                         <span class="slider"></span>
                     </label>
-                    <span>自动识别 (停止绘画2秒后)</span>
+                    <span>自动识别</span>
+                </div>
+
+                <div class="canvas-settings">
+                    <button class="action-btn" id="canvasBgBtn" title="设置画布背景色">
+                        <span>🎨</span> 背景色
+                    </button>
+                    <input type="color" id="canvasBgColor" value="#ffffff" style="display:none;">
                 </div>
             </section>
         </main>

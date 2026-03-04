@@ -574,40 +574,38 @@ body {
     min-width: 35px;
 }
 
-/* Tool Type Group */
-.tool-type-group,
-.fill-group,
-.canvas-bg-group {
+/* Tool Section */
+.tool-section {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
 }
 
-.tool-type-group label,
-.fill-group label,
-.canvas-bg-group label {
-    font-size: 0.85rem;
+.tool-section label {
+    font-size: 0.75rem;
     color: var(--text-secondary);
     white-space: nowrap;
 }
 
 .tool-buttons {
     display: flex;
-    gap: 4px;
+    gap: 3px;
     flex-wrap: wrap;
 }
 
 .tool-btn {
     display: flex;
     align-items: center;
-    gap: 4px;
-    padding: 6px 10px;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
     background: var(--bg-secondary);
     color: var(--text-primary);
     border: 1px solid var(--border-color);
-    border-radius: 8px;
+    border-radius: 6px;
     cursor: pointer;
-    font-size: 0.75rem;
+    font-size: 0.85rem;
     transition: var(--transition);
 }
 
@@ -622,40 +620,80 @@ body {
     box-shadow: 0 0 10px rgba(0, 217, 255, 0.3);
 }
 
-.fill-options {
+.color-row {
     display: flex;
-    gap: 4px;
+    align-items: center;
+    gap: 6px;
 }
 
-.fill-btn {
+.current-color {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+}
+
+.no-fill-btn {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+    cursor: pointer;
+    font-size: 0.7rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.no-fill-btn:hover {
+    border-color: var(--accent-cyan);
+}
+
+.shape-options {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.shape-options label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.shape-toggles {
+    display: flex;
+    gap: 2px;
+}
+
+.shape-toggle {
     width: 28px;
     height: 28px;
-    border-radius: 6px;
+    border-radius: 4px;
     border: 1px solid var(--border-color);
     background: var(--bg-secondary);
     cursor: pointer;
     font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     transition: var(--transition);
 }
 
-.fill-btn:hover {
+.shape-toggle:hover {
     border-color: var(--accent-cyan);
 }
 
-.fill-btn.active {
+.shape-toggle.active {
     border-color: var(--accent-cyan);
-    box-shadow: 0 0 8px rgba(0, 217, 255, 0.3);
+    background: var(--accent-secondary);
 }
 
-#fillColor,
-#canvasBgColor {
-    width: 28px;
-    height: 28px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    background: none;
-    padding: 0;
+.canvas-settings {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .action-buttons {
