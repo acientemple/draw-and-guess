@@ -556,7 +556,7 @@ class AIDrawAndGuess {
         this.lastY = pos.y;
 
         // 形状工具需要记录起点并保存当前画布状态用于预览
-        if (['line', 'rect', 'circle', 'arrow', 'star', 'heart', 'leaf', 'smile', 'sad'].includes(this.currentTool)) {
+        if (['line', 'rect', 'circle', 'arrow', 'star', 'heart', 'smile', 'sad', 'sun', 'moon', 'cloud', 'rainbow', 'flower', 'tree', 'house', 'balloon', 'butterfly', 'fish', 'bird'].includes(this.currentTool)) {
             this.shapeStartX = pos.x;
             this.shapeStartY = pos.y;
             this.tempImageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
@@ -587,7 +587,7 @@ class AIDrawAndGuess {
         }
 
         // 形状工具预览
-        if (['line', 'rect', 'circle', 'arrow', 'star', 'heart', 'leaf', 'smile', 'sad'].includes(this.currentTool)) {
+        if (['line', 'rect', 'circle', 'arrow', 'star', 'heart', 'smile', 'sad', 'sun', 'moon', 'cloud', 'rainbow', 'flower', 'tree', 'house', 'balloon', 'butterfly', 'fish', 'bird'].includes(this.currentTool)) {
             this.ctx.putImageData(this.tempImageData, 0, 0);
             this.drawShape(this.shapeStartX, this.shapeStartY, pos.x, pos.y);
             this.lastX = pos.x;
@@ -766,7 +766,418 @@ class AIDrawAndGuess {
             case 'sad':
                 this.drawSad(startX, startY, endX, endY);
                 break;
+
+            case 'sun':
+                this.drawSun(startX, startY, endX, endY);
+                break;
+
+            case 'moon':
+                this.drawMoon(startX, startY, endX, endY);
+                break;
+
+            case 'cloud':
+                this.drawCloud(startX, startY, endX, endY);
+                break;
+
+            case 'rainbow':
+                this.drawRainbow(startX, startY, endX, endY);
+                break;
+
+            case 'flower':
+                this.drawFlower(startX, startY, endX, endY);
+                break;
+
+            case 'tree':
+                this.drawTree(startX, startY, endX, endY);
+                break;
+
+            case 'house':
+                this.drawHouse(startX, startY, endX, endY);
+                break;
+
+            case 'balloon':
+                this.drawBalloon(startX, startY, endX, endY);
+                break;
+
+            case 'butterfly':
+                this.drawButterfly(startX, startY, endX, endY);
+                break;
+
+            case 'fish':
+                this.drawFish(startX, startY, endX, endY);
+                break;
+
+            case 'bird':
+                this.drawBird(startX, startY, endX, endY);
+                break;
         }
+    }
+
+    // 绘制太阳
+    drawSun(x1, y1, x2, y2) {
+        const cx = (x1 + x2) / 2;
+        const cy = (y1 + y2) / 2;
+        const radius = Math.min(Math.abs(x2 - x1), Math.abs(y2 - y1)) / 2;
+
+        // 太阳主体
+        this.ctx.beginPath();
+        this.ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+        if (this.fillColor) {
+            this.ctx.fill();
+        }
+        this.ctx.stroke();
+
+        // 太阳光芒
+        const rayLength = radius * 0.6;
+        const rayCount = 8;
+        for (let i = 0; i < rayCount; i++) {
+            const angle = (i * Math.PI * 2) / rayCount;
+            const x3 = cx + (radius + rayLength * 0.3) * Math.cos(angle);
+            const y3 = cy + (radius + rayLength * 0.3) * Math.sin(angle);
+            const x4 = cx + (radius + rayLength) * Math.cos(angle);
+            const y4 = cy + (radius + rayLength) * Math.sin(angle);
+
+            this.ctx.beginPath();
+            this.ctx.moveTo(x3, y3);
+            this.ctx.lineTo(x4, y4);
+            this.ctx.stroke();
+        }
+    }
+
+    // 绘制月亮
+    drawMoon(x1, y1, x2, y2) {
+        const cx = (x1 + x2) / 2;
+        const cy = (y1 + y2) / 2;
+        const radius = Math.min(Math.abs(x2 - x1), Math.abs(y2 - y1)) / 2;
+
+        this.ctx.beginPath();
+        this.ctx.arc(cx, cy, radius, 0.2 * Math.PI, 1.8 * Math.PI);
+        this.ctx.arc(cx + radius * 0.5, cy - radius * 0.1, radius * 0.8, 1.3 * Math.PI, 0.5 * Math.PI, true);
+        if (this.fillColor) {
+            this.ctx.fill();
+        }
+        this.ctx.stroke();
+    }
+
+    // 绘制云朵
+    drawCloud(x1, y1, x2, y2) {
+        const cx = (x1 + x2) / 2;
+        const cy = (y1 + y2) / 2;
+        const w = Math.abs(x2 - x1) / 2;
+        const h = Math.abs(y2 - y1) / 2;
+
+        this.ctx.beginPath();
+        this.ctx.arc(cx - w * 0.4, cy, h * 0.6, 0, Math.PI * 2);
+        this.ctx.arc(cx, cy - h * 0.3, h * 0.7, 0, Math.PI * 2);
+        this.ctx.arc(cx + w * 0.4, cy, h * 0.5, 0, Math.PI * 2);
+        this.ctx.arc(cx + w * 0.15, cy + h * 0.2, h * 0.4, 0, Math.PI * 2);
+        if (this.fillColor) {
+            this.ctx.fill();
+        }
+        this.ctx.stroke();
+    }
+
+    // 绘制彩虹
+    drawRainbow(x1, y1, x2, y2) {
+        const cx = x1;
+        const cy = y2;
+        const maxRadius = Math.abs(y2 - y1);
+        const colors = ['#ff0000', '#ff7f00', '#ffff00', '#00ff00', '#0000ff', '#4b0082', '#9400d3'];
+
+        for (let i = 0; i < 7; i++) {
+            const radius = maxRadius * (1 - i * 0.12);
+            this.ctx.beginPath();
+            this.ctx.arc(cx, cy, radius, Math.PI, 0);
+            this.ctx.strokeStyle = colors[i];
+            this.ctx.lineWidth = maxRadius * 0.1;
+            this.ctx.stroke();
+        }
+        this.ctx.lineWidth = this.currentBrushSize;
+        this.ctx.strokeStyle = this.strokeColor;
+    }
+
+    // 绘制花朵
+    drawFlower(x1, y1, x2, y2) {
+        const cx = (x1 + x2) / 2;
+        const cy = (y1 + y2) / 2;
+        const radius = Math.min(Math.abs(x2 - x1), Math.abs(y2 - y1)) / 2;
+        const petalCount = 5;
+
+        // 花瓣
+        for (let i = 0; i < petalCount; i++) {
+            const angle = (i * Math.PI * 2) / petalCount;
+            const px = cx + radius * 0.6 * Math.cos(angle);
+            const py = cy + radius * 0.6 * Math.sin(angle);
+
+            this.ctx.beginPath();
+            this.ctx.ellipse(px, py, radius * 0.5, radius * 0.3, angle, 0, Math.PI * 2);
+            if (this.fillColor) {
+                this.ctx.fill();
+            }
+            this.ctx.stroke();
+        }
+
+        // 花心
+        this.ctx.beginPath();
+        this.ctx.arc(cx, cy, radius * 0.3, 0, Math.PI * 2);
+        this.ctx.fillStyle = '#ffd700';
+        this.ctx.fill();
+        this.ctx.stroke();
+    }
+
+    // 绘制树
+    drawTree(x1, y1, x2, y2) {
+        const cx = (x1 + x2) / 2;
+        const bottom = Math.max(y1, y2);
+        const top = Math.min(y1, y2);
+        const height = bottom - top;
+        const width = Math.abs(x2 - x1);
+
+        // 树干
+        const trunkWidth = width * 0.3;
+        this.ctx.fillStyle = '#8B4513';
+        this.ctx.fillRect(cx - trunkWidth / 2, bottom - height * 0.3, trunkWidth, height * 0.3);
+        this.ctx.strokeRect(cx - trunkWidth / 2, bottom - height * 0.3, trunkWidth, height * 0.3);
+
+        // 树冠 (三角形)
+        this.ctx.beginPath();
+        this.ctx.moveTo(cx, top);
+        this.ctx.lineTo(cx + width * 0.5, bottom - height * 0.25);
+        this.ctx.lineTo(cx - width * 0.5, bottom - height * 0.25);
+        this.ctx.closePath();
+        if (this.fillColor) {
+            this.ctx.fill();
+        }
+        this.ctx.stroke();
+    }
+
+    // 绘制房子
+    drawHouse(x1, y1, x2, y2) {
+        const left = Math.min(x1, x2);
+        const right = Math.max(x1, x2);
+        const top = Math.min(y1, y2);
+        const bottom = Math.max(y1, y2);
+        const width = right - left;
+        const height = bottom - top;
+
+        // 墙体
+        this.ctx.beginPath();
+        this.ctx.rect(left, top + height * 0.4, width, height * 0.6);
+        if (this.fillColor) {
+            this.ctx.fill();
+        }
+        this.ctx.stroke();
+
+        // 屋顶 (三角形)
+        this.ctx.beginPath();
+        this.ctx.moveTo(left - width * 0.1, top + height * 0.4);
+        this.ctx.lineTo(cx + width / 2, top - height * 0.1);
+        this.ctx.lineTo(right + width * 0.1, top + height * 0.4);
+        this.ctx.closePath();
+        if (this.fillColor) {
+            this.ctx.fill();
+        }
+        this.ctx.stroke();
+
+        // 门
+        const doorWidth = width * 0.25;
+        const doorHeight = height * 0.35;
+        this.ctx.beginPath();
+        this.ctx.rect(left + width / 2 - doorWidth / 2, bottom - doorHeight, doorWidth, doorHeight);
+        this.ctx.stroke();
+
+        // 窗户
+        const windowSize = width * 0.2;
+        this.ctx.beginPath();
+        this.ctx.rect(left + width * 0.15, top + height * 0.5, windowSize, windowSize);
+        this.ctx.rect(right - width * 0.15 - windowSize, top + height * 0.5, windowSize, windowSize);
+        this.ctx.stroke();
+    }
+
+    // 绘制气球
+    drawBalloon(x1, y1, x2, y2) {
+        const cx = (x1 + x2) / 2;
+        const top = Math.min(y1, y2);
+        const bottom = Math.max(y1, y2);
+        const radius = Math.min(Math.abs(x2 - x1), Math.abs(y2 - y1)) / 2;
+
+        // 气球主体 (椭圆)
+        this.ctx.beginPath();
+        this.ctx.ellipse(cx, top + radius * 0.6, radius * 0.7, radius, 0, 0, Math.PI * 2);
+        if (this.fillColor) {
+            this.ctx.fill();
+        }
+        this.ctx.stroke();
+
+        // 气球绳子
+        this.ctx.beginPath();
+        this.ctx.moveTo(cx, top + radius * 1.5);
+        this.ctx.quadraticCurveTo(cx - 10, bottom - 10, cx, bottom);
+        this.ctx.stroke();
+
+        // 气球高光
+        this.ctx.beginPath();
+        this.ctx.ellipse(cx - radius * 0.25, top + radius * 0.3, radius * 0.15, radius * 0.2, -0.5, 0, Math.PI * 2);
+        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+        this.ctx.fill();
+    }
+
+    // 绘制蝴蝶
+    drawButterfly(x1, y1, x2, y2) {
+        const cx = (x1 + x2) / 2;
+        const cy = (y1 + y2) / 2;
+        const w = Math.abs(x2 - x1) / 2;
+        const h = Math.abs(y2 - y1) / 2;
+
+        // 左翅膀
+        this.ctx.beginPath();
+        this.ctx.ellipse(cx - w * 0.4, cy - h * 0.3, w * 0.5, h * 0.4, -0.3, 0, Math.PI * 2);
+        if (this.fillColor) {
+            this.ctx.fill();
+        }
+        this.ctx.stroke();
+
+        this.ctx.beginPath();
+        this.ctx.ellipse(cx - w * 0.35, cy + h * 0.3, w * 0.45, h * 0.35, 0.3, 0, Math.PI * 2);
+        if (this.fillColor) {
+            this.ctx.fill();
+        }
+        this.ctx.stroke();
+
+        // 右翅膀
+        this.ctx.beginPath();
+        this.ctx.ellipse(cx + w * 0.4, cy - h * 0.3, w * 0.5, h * 0.4, 0.3, 0, Math.PI * 2);
+        if (this.fillColor) {
+            this.ctx.fill();
+        }
+        this.ctx.stroke();
+
+        this.ctx.beginPath();
+        this.ctx.ellipse(cx + w * 0.35, cy + h * 0.3, w * 0.45, h * 0.35, -0.3, 0, Math.PI * 2);
+        if (this.fillColor) {
+            this.ctx.fill();
+        }
+        this.ctx.stroke();
+
+        // 身体
+        this.ctx.beginPath();
+        this.ctx.ellipse(cx, cy, w * 0.1, h * 0.5, 0, 0, Math.PI * 2);
+        this.ctx.fillStyle = '#333';
+        this.ctx.fill();
+
+        // 触角
+        this.ctx.beginPath();
+        this.ctx.moveTo(cx - w * 0.05, cy - h * 0.5);
+        this.ctx.quadraticCurveTo(cx - w * 0.2, cy - h * 0.8, cx - w * 0.15, cy - h * 0.9);
+        this.ctx.moveTo(cx + w * 0.05, cy - h * 0.5);
+        this.ctx.quadraticCurveTo(cx + w * 0.2, cy - h * 0.8, cx + w * 0.15, cy - h * 0.9);
+        this.ctx.stroke();
+    }
+
+    // 绘制鱼
+    drawFish(x1, y1, x2, y2) {
+        const cx = (x1 + x2) / 2;
+        const cy = (y1 + y2) / 2;
+        const w = Math.abs(x2 - x1) / 2;
+        const h = Math.abs(y2 - y1) / 2;
+
+        // 身体 (椭圆)
+        this.ctx.beginPath();
+        this.ctx.ellipse(cx, cy, w * 0.7, h * 0.6, 0, 0, Math.PI * 2);
+        if (this.fillColor) {
+            this.ctx.fill();
+        }
+        this.ctx.stroke();
+
+        // 尾巴
+        this.ctx.beginPath();
+        this.ctx.moveTo(cx - w * 0.6, cy);
+        this.ctx.lineTo(cx - w, cy - h * 0.5);
+        this.ctx.lineTo(cx - w, cy + h * 0.5);
+        this.ctx.closePath();
+        if (this.fillColor) {
+            this.ctx.fill();
+        }
+        this.ctx.stroke();
+
+        // 眼睛
+        const eyeRadius = w * 0.1;
+        this.ctx.beginPath();
+        this.ctx.arc(cx + w * 0.35, cy - h * 0.15, eyeRadius, 0, Math.PI * 2);
+        this.ctx.fillStyle = '#fff';
+        this.ctx.fill();
+        this.ctx.stroke();
+
+        this.ctx.beginPath();
+        this.ctx.arc(cx + w * 0.4, cy - h * 0.15, eyeRadius * 0.5, 0, Math.PI * 2);
+        this.ctx.fillStyle = '#000';
+        this.ctx.fill();
+
+        // 鱼鳍
+        this.ctx.beginPath();
+        this.ctx.moveTo(cx, cy - h * 0.5);
+        this.ctx.lineTo(cx - w * 0.2, cy - h);
+        this.ctx.lineTo(cx + w * 0.2, cy - h * 0.5);
+        this.ctx.closePath();
+        if (this.fillColor) {
+            this.ctx.fill();
+        }
+        this.ctx.stroke();
+    }
+
+    // 绘制小鸟
+    drawBird(x1, y1, x2, y2) {
+        const cx = (x1 + x2) / 2;
+        const cy = (y1 + y2) / 2;
+        const w = Math.abs(x2 - x1) / 2;
+        const h = Math.abs(y2 - y1) / 2;
+
+        // 身体
+        this.ctx.beginPath();
+        this.ctx.ellipse(cx, cy, w * 0.5, h * 0.4, 0, 0, Math.PI * 2);
+        if (this.fillColor) {
+            this.ctx.fill();
+        }
+        this.ctx.stroke();
+
+        // 翅膀
+        this.ctx.beginPath();
+        this.ctx.ellipse(cx - w * 0.1, cy - h * 0.2, w * 0.4, h * 0.3, -0.3, 0, Math.PI * 2);
+        if (this.fillColor) {
+            this.ctx.fill();
+        }
+        this.ctx.stroke();
+
+        // 头
+        this.ctx.beginPath();
+        this.ctx.arc(cx + w * 0.45, cy - h * 0.2, w * 0.25, 0, Math.PI * 2);
+        if (this.fillColor) {
+            this.ctx.fill();
+        }
+        this.ctx.stroke();
+
+        // 眼睛
+        this.ctx.beginPath();
+        this.ctx.arc(cx + w * 0.55, cy - h * 0.25, w * 0.06, 0, Math.PI * 2);
+        this.ctx.fillStyle = '#000';
+        this.ctx.fill();
+
+        // 嘴巴
+        this.ctx.beginPath();
+        this.ctx.moveTo(cx + w * 0.65, cy - h * 0.2);
+        this.ctx.lineTo(cx + w * 0.8, cy - h * 0.15);
+        this.ctx.lineTo(cx + w * 0.65, cy - h * 0.1);
+        this.ctx.closePath();
+        this.ctx.fillStyle = '#ffa500';
+        this.ctx.fill();
+
+        // 腿
+        this.ctx.beginPath();
+        this.ctx.moveTo(cx + w * 0.1, cy + h * 0.35);
+        this.ctx.lineTo(cx + w * 0.1, cy + h * 0.6);
+        this.ctx.moveTo(cx - w * 0.1, cy + h * 0.35);
+        this.ctx.lineTo(cx - w * 0.1, cy + h * 0.6);
+        this.ctx.stroke();
     }
 
     // 绘制星星
@@ -1065,7 +1476,7 @@ class AIDrawAndGuess {
             this.isDrawing = false;
 
             // 形状工具在停止时保存最终状态
-            if (['line', 'rect', 'circle', 'arrow', 'star', 'heart', 'leaf', 'smile', 'sad'].includes(this.currentTool)) {
+            if (['line', 'rect', 'circle', 'arrow', 'star', 'heart', 'smile', 'sad', 'sun', 'moon', 'cloud', 'rainbow', 'flower', 'tree', 'house', 'balloon', 'butterfly', 'fish', 'bird'].includes(this.currentTool)) {
                 this.saveCanvasState();
                 this.tempCanvas = null;
             } else {
