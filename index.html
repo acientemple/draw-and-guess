@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 猜画 - 你画我猜</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo">
+                <span class="logo-icon">🎨</span>
+                <h1>AI 猜画</h1>
+            </div>
+            <div class="header-right">
+                <div class="model-section">
+                    <label>选择模型</label>
+                    <select id="modelSelect">
+                        <optgroup label="🌐 国际模型">
+                            <option value="openai">OpenAI GPT-4o</option>
+                            <option value="gemini">Google Gemini</option>
+                            <option value="anthropic">Anthropic Claude</option>
+                        </optgroup>
+                        <optgroup label="🔄 聚合平台">
+                            <option value="openrouter">OpenRouter</option>
+                            <option value="opendoor">OpenDoor</option>
+                        </optgroup>
+                        <optgroup label="🇨🇳 国内模型">
+                            <option value="deepseek">DeepSeek VL</option>
+                            <option value="minimax">MiniMax</option>
+                            <option value="zhipu">智谱 GLM-4V</option>
+                            <option value="qwen">阿里云 Qwen-VL</option>
+                            <option value="spark">讯飞星火 Spark</option>
+                            <option value="baidu">百度 ERNIE-ViLG</option>
+                            <option value="tencent">腾讯混元</option>
+                            <option value="modelscope">ModelScope 魔搭</option>
+                        </optgroup>
+                    </select>
+                </div>
+                <div class="api-key-section">
+                    <div class="api-input-wrapper">
+                        <input type="password" id="apiKeyInput" placeholder="输入 API Key" autocomplete="off">
+                        <button class="toggle-visibility" id="toggleApiVisibility" title="显示/隐藏">
+                            <span class="eye-icon">👁️</span>
+                        </button>
+                    </div>
+                    <button class="save-api-btn" id="saveApiKey">保存</button>
+                </div>
+                <div class="connection-status" id="connectionStatus">
+                    <span class="status-dot"></span>
+                    <span class="status-text">未设置</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- AI Panel (Left) -->
+            <aside class="ai-panel">
+                <div class="panel-header">
+                    <div class="ai-avatar">
+                        <span class="ai-icon">🤖</span>
+                    </div>
+                    <div class="ai-info">
+                        <h2>AI 助手</h2>
+                        <p id="aiStatus">等待绘画...</p>
+                    </div>
+                </div>
+
+                <div class="current-guess">
+                    <h3>AI 的猜测</h3>
+                    <div class="guess-content" id="guessContent">
+                        <p class="placeholder">开始绘画，让我猜猜你画的是什么~</p>
+                    </div>
+                    <div class="guess-confidence" id="guessConfidence"></div>
+                </div>
+
+                <div class="guess-history">
+                    <div class="history-header">
+                        <h3>猜测历史</h3>
+                        <button class="clear-history-btn" id="clearHistoryBtn" title="清除历史记录">🗑️</button>
+                    </div>
+                    <ul id="historyList">
+                        <!-- 历史记录将通过 JS 添加 -->
+                    </ul>
+                </div>
+            </aside>
+
+            <!-- Drawing Area (Right) -->
+            <section class="drawing-area">
+                <div class="canvas-container">
+                    <canvas id="drawingCanvas" width="800" height="500"></canvas>
+                    <div class="canvas-overlay" id="canvasOverlay">
+                        <span>🖌️ 开始绘画吧</span>
+                    </div>
+                </div>
+
+                <div class="tools-bar">
+                    <div class="color-picker-group">
+                        <label>颜色</label>
+                        <div class="color-options">
+                            <button class="color-btn active" style="background: #1a1a2e;" data-color="#1a1a2e" title="黑色"></button>
+                            <button class="color-btn" style="background: #e94560;" data-color="#e94560" title="珊瑚红"></button>
+                            <button class="color-btn" style="background: #0f3460;" data-color="#0f3460" title="深蓝"></button>
+                            <button class="color-btn" style="background: #00d9ff;" data-color="#00d9ff" title="青色"></button>
+                            <button class="color-btn" style="background: #39da8a;" data-color="#39da8a" title="绿色"></button>
+                            <button class="color-btn" style="background: #ffc107;" data-color="#ffc107" title="黄色"></button>
+                            <button class="color-btn" style="background: #ff6b35;" data-color="#ff6b35" title="橙色"></button>
+                            <button class="color-btn" style="background: #9b59b6;" data-color="#9b59b6" title="紫色"></button>
+                            <button class="color-btn" style="background: #ffffff; border: 1px solid #444;" data-color="#ffffff" title="橡皮擦"></button>
+                            <input type="color" id="customColor" value="#000000" title="自定义颜色">
+                        </div>
+                    </div>
+
+                    <div class="brush-size-group">
+                        <label>笔刷</label>
+                        <input type="range" id="brushSize" min="1" max="50" value="5">
+                        <span id="brushSizeValue">5px</span>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="action-btn" id="undoBtn" title="撤销">
+                            <span>↩️</span> 撤销
+                        </button>
+                        <button class="action-btn" id="clearBtn" title="清空">
+                            <span>🗑️</span> 清空
+                        </button>
+                        <button class="action-btn primary" id="guessBtn" title="让AI猜猜">
+                            <span>🤔</span> 让AI猜猜
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mode-toggle">
+                    <label class="switch">
+                        <input type="checkbox" id="autoGuess" checked>
+                        <span class="slider"></span>
+                    </label>
+                    <span>自动识别 (停止绘画2秒后)</span>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <p>💡 提示: 绘画完成后，AI 会自动或手动分析你的作品</p>
+        </footer>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <p>AI 正在分析画作...</p>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <span class="toast-message"></span>
+    </div>
+
+    <script src="js/script.js"></script>
+</body>
+</html>
